@@ -1,0 +1,116 @@
+C51 COMPILER V9.59.0.0   DS18B20                                                           07/01/2023 20:51:03 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE DS18B20
+OBJECT MODULE PLACED IN ds18b20.OBJ
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ds18b20.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          /******************************************************************
+   2          ¿ª»úÊ±¶ÔDS18B20½øÐÐ¼ì²â£¬Èç¹ûDS18B20¼ì²â²»Õý³£Ôò¹Ø±ÕÏÔÊ¾£»
+   3          ËÄÎ»ÊýÂë¹ÜÏÔÊ¾ÎÂ¶È£¬Èô¸ßÎ»Îª0ÔòÒþ²Ø£»·¶Î§-55¡«+128
+   4          °´¼üKEY3ÇÐ»»¹¤×÷Ä£Ê½,LED3Ö¸Ê¾¹¤×÷×´Ì¬(ÁÁÔòÔÚ¹¤×÷,ÃðÔò²»¹¤×÷,ÖÆÀäÄ£Ê½ÏÂÁÁµÆ±íÊ¾ÕýÔÚÖÆÀä,ÖÆÈÈÄ£Ê½ÏÂ±íÊ¾ÕýÔÚÖ
+             -ÆÈÈ..)
+   5          ******************************************************************/
+   6          #include <reg51.h>
+   7          #include <intrins.h>
+   8          #include "ds18b20.h"
+   9          
+  10          sbit LED1=P1^0;  //ÖÆÀäÄ£Ê½Ö¸Ê¾µÆ
+  11          sbit LED2=P1^1;  //¼ÓÈÈÄ£Ê½Ö¸Ê¾µÆ
+  12          sbit LED3=P1^2;  //ÎÂ¶ÈÎ´´ïµ½Éè¶¨ÎÂ¶È£¬¼ÓÈÈ/ÖÆÀä¹¤×÷Ö¸Ê¾µÆ
+  13          sbit KEY1=P1^4;  //ÉèÖÃÎÂ¶ÈÔö¼Ó
+  14          sbit KEY2=P1^5;  //ÉèÖÃÎÂ¶È¼õÉÙ
+  15          sbit KEY3=P1^6;  //¼ÓÈÈ/ÖÆÀäÄ£Ê½ÇÐ»»
+  16          sbit COD1=P3^6;  //ÖÆÀä¿ØÖÆÊä³ö
+  17          sbit HOT1=P3^7;  //¼ÓÈÈ¿ØÖÆÊä³ö  
+  18          
+  19          //  ActualTemperature±íÊ¾Êµ¼ÊÎÂ¶È£¬ShowTemperatureÓÃÓÚÏÔÊ¾ÎÂ¶È£¬ modeÖ¸Ê¾Ä£Ê½×´Ì¬ 0: COD 1: HOT   TargetTe
+             -mperatureÎªÉè¶¨ÎÂ¶ÈÖµ
+  20          int ShowTemperature, mode, TargetTemperature; 
+  21          unsigned char b1,b2,b3; //°´¼ü·À¶¶
+  22          TargetTemperature = 24; //¿ª»úÎÂ¶È24
+  23          
+  24          void main(void)
+  25          {   
+  26   1        while(1)
+  27   1        {   Read_Temperature();
+  28   2          if(flash==0)             
+  29   2             Disp_Temperature();
+  30   2          else
+  31   2             P2 =0xff ;        //DS18B20²»Õý³££¬¹Ø±ÕÏÔÊ¾ ¹²ÑôÊýÂë¹Ü,ÖÃ1²»ÏÔÊ¾
+  32   2      
+  33   2      
+  34   2        if(!KEY1) b1++;
+  35   2          if((KEY1==1)&&(b1>0)) {TargetTemperature = (TargetTemperature+1); b1=0;}  //ÎÂ¶ÈÔö¼Ó
+  36   2        if(b1>100) TargetTemperature = (TargetTemperature+1);  //Èç¹ûÒ»Ö±°´×¡£¬×Ô¶¯Ñ­»·¼Ó
+  37   2      
+  38   2        if(!KEY2) b2++;
+  39   2          if((KEY2==1)&&(b2>0)) {TargetTemperature = (TargetTemperature-1);b2=0;} //ÎÂ¶È¼õÉÙ
+  40   2        if(b2>100) TargetTemperature = (TargetTemperature-1);  //Èç¹ûÒ»Ö±°´×¡£¬×Ô¶¯Ñ­»·¼õ
+  41   2      
+  42   2        //mode=0:Èç¹ûÊµ²âActualTemperature´óÓÚÉè¶¨TargetTemperature   LED3=0
+  43   2        if( ActualTemperature > TargetTemperature) LED3=0;else LED3=1;    
+  44   2        //mode=1:Èç¹ûÎª¼ÓÈÈÄ£Ê½£¬¶ÔÖÆÀäµÄ¹¤×÷×´Ì¬È¡·´(ÖÆÀäÐèÒª¹¤×÷/²»¹¤×÷,ÔòÕâÀïÐèÒª²»¹¤×÷/¹¤×÷)  Èç¹ûÊÇ¼ÓÈÈÄ£Ê½
+             -,ÔÙ°ÑLED3µãÁÁ. ÔÚ¶Ïµã1³ö×öÅÐ¶Ï
+  45   2        if( mode == 1 ) {LED3=(!LED3);}    //ÕâÁ½ÐÐ°ÑÁ½ÖÖÄ£Ê½ * Á½ÖÖÎÂ¶È = 4 ÖÖÇé¿ö¶¼ÈÁÀ¨ÁË,²¢×Ü½á³öÊÇ·ñÐèÒª¹¤×÷,
+             -ÓÉLED3Ö¸Ê¾.
+  46   2      
+  47   2        if(!KEY3) b3++;
+  48   2          if((KEY3==1)&&(b3>0)) {mode=(mode+1);b3=0;} //¼ÓÈÈ/ÖÆÀäÇÐ»»
+  49   2      
+  50   2        //¹¤×÷Ä£Ê½¹ØÁªLED
+  51   2        if(mode==0) {LED1=0;LED2=1;}     //ÖÆÀäÖ¸Ê¾µÆ¿ØÖÆ
+C51 COMPILER V9.59.0.0   DS18B20                                                           07/01/2023 20:51:03 PAGE 2   
+
+  52   2        if(mode==1) {LED1=1;LED2=0;}     //¼ÓÈÈÖ¸Ê¾µÆ¿ØÖÆ ¶Ïµã1
+  53   2        
+  54   2        if(mode>=2) mode=0;     //Ä£Ê½ÇÐ»»°´¼ü¼ÆÊý¹éÁã mode %= 2;
+  55   2        //LED3==0±íÊ¾ÐèÒª¹¤×÷,ÓÉLED1ºÍLED2¾ö¶¨¹¤×÷Ä£Ê½
+  56   2        if((LED1==0)&&(LED3==0)) COD1=0;else COD1=1; //ÖÆÀä¿ªÆô
+  57   2        if((LED2==0)&&(LED3==0)) HOT1=0;else HOT1=1; //¼ÓÈÈ¿ªÆô
+  58   2      
+  59   2        //ÎÂ¶ÈÏÞ·ù
+  60   2        if(TargetTemperature>1280) TargetTemperature=1280; //Éè¶¨×î¸ßÎÂ¶ÈÏÞÖÆ
+  61   2        if(TargetTemperature<-550) TargetTemperature=-550; //Éè¶¨×îµÍÎÂ¶ÈÏÞÖÆ
+  62   2      
+  63   2        //Èç¹ûTargetTemperatureÐ¡ÓÚ0 ShowTemperatureµÈÓÚTargetTemperatureµÄ²¹Âë¼Ó0X01
+  64   2        if(TargetTemperature<0) ShowTemperature =~ TargetTemperature+0x01; else ShowTemperature=TargetTemperature
+             -;  
+  65   2      
+  66   2          display[7]=ShowTemperature/1000;    //ÉèÖÃÎÂ¶ÈµÄ°ÙÎ»Êý
+  67   2          display[6]=ShowTemperature%1000/100;//ÉèÖÃÎÂ¶ÈÖµµÄÊ®Î»Êý 
+  68   2          display[5]=ShowTemperature%100/10;  //ÉèÖÃÎÂ¶ÈÖµµÄ¸öÎ»Êý
+  69   2          display[4]=ShowTemperature%10;      //ÉèÖÃÎÂ¶ÈÖµµÄÐ¡ÊýµãºóÒ»Î»
+  70   2          if(!display[7]){                    //¸ßÎ»Îª0£¬²»ÏÔÊ¾
+  71   3              display[7]=0x0a;              
+  72   3              if(!display[6])                 //´Î¸ßÎ»Îª0£¬²»ÏÔÊ¾
+  73   3                display[6]=0x0a;
+  74   3          }
+  75   2          if(TargetTemperature < 0){        //Èç¹ûTargetTemperatureÐ¡ÓÚ0£¨Îª¸ºÊý£©
+  76   3            if(display[6]==0x0a)            //Èç¹û¸ºÎÂ¶ÈµÄÊ®Î»Îª0
+  77   3              display[6]=0x0b;              //ÔòÊ®Î»ÓÃÀ´ÏÔÊ¾¸ººÅ
+  78   3          else
+  79   3          display[7]=0x0b;                  //·ñÔò¸ºÎÂ¶ÈµÄ°ÙÎ»ÏÔÊ¾¸ººÅ
+  80   3          } 
+  81   2        }
+  82   1      }
+  83          
+*** WARNING C290 IN LINE 70 OF ds18b20.c: missing return value
+*** WARNING C290 IN LINE 102 OF ds18b20.c: missing return value
+*** WARNING C290 IN LINE 137 OF ds18b20.c: missing return value
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    971    ----
+   CONSTANT SIZE    =     28    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     31    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  3 WARNING(S),  0 ERROR(S)
