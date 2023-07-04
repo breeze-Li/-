@@ -12,7 +12,7 @@ uchar code  ditab[16]   = {0x00,0x01,0x01,0x02,0x03,0x03,0x04,0x04,0x05,0x06,0x0
 bit  flash=0;        //显示开关标记
 uchar NegativeFlag=0;//负数标志  
  
-int ActualTemperature;//实际温度  
+int ActualTemperature;//实际温度扩大10倍  
 
 
 

@@ -57,8 +57,8 @@ void main(void)
 	if((LED2==0)&&(LED3==0)) HOT1=0;else HOT1=1; //加热开启
 
   //温度限幅
-	if(TargetTemperature>1280) TargetTemperature=1280; //设定最高温度限制
-	if(TargetTemperature<-550) TargetTemperature=-550; //设定最低温度限制
+	if(TargetTemperature>600) TargetTemperature=600; //设定最高温度限制
+	if(TargetTemperature<-200) TargetTemperature=-200; //设定最低温度限制
 
   //如果TargetTemperature小于0 ShowTemperature等于TargetTemperature的补码加0X01
 	if(TargetTemperature<0) ShowTemperature =~ TargetTemperature+0x01; else ShowTemperature=TargetTemperature;  
